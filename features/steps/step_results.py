@@ -8,20 +8,7 @@ the then steps to evaluate them.
 
 from behave import given, when, then
 import json
-from typing import Any
-from features.steps.common import Comparison, compare
-
-DEFAULT_RESULT_NAME = "(DEFAULT)"
-
-def set_result(context, value, name: str):
-    if not hasattr(context, "results"):
-        context.results = { }
-    context.results[name] = value
-
-def get_result(context, name: str, default: Any = None):
-    if not hasattr(context, "results") or name not in context.results:
-        return default
-    return context.results[name]
+from features.steps.common import Comparison, compare, get_result, set_result, DEFAULT_RESULT_NAME, evaluate
 
 ################################################################################
 # Given
@@ -30,7 +17,7 @@ def get_result(context, name: str, default: Any = None):
 @given("the result {name:S} is {value}")
 def step__given_result_name_is_value(context, name: str, value: str):
     """Set the result by manually"""
-    set_result(context, name=name, value=json.loads(value))
+    set_result(context, name=name, value=evaluate(context, value))
 
 @given("the result is {value}")
 def step__given_result_is_value(context, value: str):
@@ -79,7 +66,7 @@ def step__then_the_result_is_value(context, op: Comparison, expected: str):
 @then("the result {name:S} {op:Comparison} {expected}")
 def step__then_the_result_name_is_value(context, name: str, op:Comparison, expected: str):
     actual = get_result(context, name=name)
-    expected = json.loads(expected)
+    expected = evaluate(context, expected)
     compare(
         actual=actual,
         op=op,
