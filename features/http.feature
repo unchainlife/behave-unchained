@@ -33,3 +33,7 @@ Feature: HTTP server
       | Content-Type     | application/json  |
       | X-Correlation-Id | ${CORRELATION_ID} |
       | X-Request-Id     | ${REQUEST_ID}     |
+    And the response body matches
+      """
+      x = 123
+      """

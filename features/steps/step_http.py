@@ -1,6 +1,7 @@
 from behave import given, when, then
 import requests
 from requests.structures import CaseInsensitiveDict
+from jsonata import Jsonata
 
 from features.utils.common import evaluate, write_context, read_context
 
@@ -129,6 +130,14 @@ def the_response_name_headers_include(context, name):
             mismatched.append(f"{k} expected '{v}' vs actual '{response.headers[k]}'")
     assert mismatched == [], f"{len(mismatched)} errors: {", ".join(mismatched)}"
 
+@then("the response {name:S} body matches {query}")
+def then_the_response_name_body_matches_query(context, name, query):
+    response: requests.Response = read_context(context, HTTP_RESPONSES, name)
+    actual = response.content
+    expr = Jsonata(query)
+    result = expr.evaluate(actual)
+    assert result is True, f"{actual} vs {query}"
+
 # ------------------------------------------------------------------------------
 # Overloads
 # ------------------------------------------------------------------------------
@@ -149,3 +158,14 @@ def then_the_response_status_code_is(context, status_code):
 def the_response_headers_include(context):
     the_response_name_headers_include(context, DEFAULT_RESPONSE_NAME)
 
+@then("the response {name:S} body matches")
+def then_the_response_name_body_matches(context, name):
+    then_the_response_name_body_matches_query(context, name, context.text)
+
+@then("the response body matches {query}")
+def then_the_response_name_body_matches(context, query):
+    then_the_response_name_body_matches_query(context, DEFAULT_RESPONSE_NAME, query)
+
+@then("the response body matches")
+def then_the_response_name_body_matches(context):
+    then_the_response_name_body_matches_query(context, DEFAULT_RESPONSE_NAME, context.text)
