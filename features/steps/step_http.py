@@ -1,6 +1,7 @@
 from behave import given, when, then
 import requests
 from requests.structures import CaseInsensitiveDict
+import json
 from jsonata import Jsonata
 
 from features.utils.common import evaluate, write_context, read_context
@@ -133,7 +134,7 @@ def the_response_name_headers_include(context, name):
 @then("the response {name:S} body matches {query}")
 def then_the_response_name_body_matches_query(context, name, query):
     response: requests.Response = read_context(context, HTTP_RESPONSES, name)
-    actual = response.content
+    actual = json.loads(response.content.decode("utf-8"))
     expr = Jsonata(query)
     result = expr.evaluate(actual)
     assert result is True, f"{actual} vs {query}"

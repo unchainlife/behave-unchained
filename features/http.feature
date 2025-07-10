@@ -35,5 +35,5 @@ Feature: HTTP server
       | X-Request-Id     | ${REQUEST_ID}     |
     And the response body matches
       """
-      x = 123
+      message = "Echo"
       """
