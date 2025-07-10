@@ -71,7 +71,7 @@ Then:
 """
 
 from behave import given, then
-from features.steps.common import Comparison, compare, get_value, set_value_expr, evaluate, DEFAULT_RESULT_NAME
+from features.steps.common import Comparison, compare, get_value, set_value, evaluate, DEFAULT_RESULT_NAME
 
 ################################################################################
 # Given
@@ -80,7 +80,7 @@ from features.steps.common import Comparison, compare, get_value, set_value_expr
 @given("the value {name:S} is {value}")
 def step__given_value_name_is_value(context, name: str, value: str):
     """Set the value by manually"""
-    set_value_expr(context, name=name, value=value)
+    set_value(context, name=name, value=value)
 
 @given("the value is {value}")
 def step__given_value_is_value(context, value: str):
@@ -94,7 +94,7 @@ def step__given_value_name_is_text(context, name: str):
 @given("the values")
 def step__given_the_values(context):
     for row in context.table:
-        set_value_expr(context, name=row["name"], value=row["value"])
+        set_value(context, name=row["name"], value=row["value"])
 
 ################################################################################
 # When

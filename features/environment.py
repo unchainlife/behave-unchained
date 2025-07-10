@@ -1,10 +1,12 @@
 import uuid
+from behave import fixture, use_fixture
 
 def before_feature(context, feature):
     if "skip" in feature.tags:
         feature.skip("Marked with @skip")
-    context.functions = {}
-    context.functions["UUID"] = uuid.uuid4
+    context.functions = {
+        "UUID": uuid.uuid4
+    }
 
 def before_scenario(context, scenario):
     if "skip" in scenario.tags:
@@ -12,3 +14,12 @@ def before_scenario(context, scenario):
     context.values = {}
     context.results = {}
 
+def before_tag(context, tag):
+    if tag == "generator":
+        use_fixture(generator, context)
+
+@fixture
+def generator(context):
+    print (">>> before")
+    yield
+    print ("<<< after")

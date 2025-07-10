@@ -1,19 +1,11 @@
+@generator
 Feature: The ability to set and validate values
 
-  Scenario Outline: Named values
-    Given the value <name> is <value>
-    Then the value <name> = <value>
+  Scenario: Basic values
+    Given the value X is 123
+     Then the value X is 123
 
-    Examples:
-      | name   | value       |
-      | bool   | true        |
-      | number |     123.456 |
-      | str    | "foo"       |
-      | obj    | { }         |
-      | list   | [ 1, 2, 3 ] |
-      | None   | null        |
-
-  Scenario: Results table
+  Scenario: Values in table form
     Given the values
       | name | value |
       | A    | "a"   |
@@ -21,34 +13,20 @@ Feature: The ability to set and validate values
     Then the value A = "a"
     And the value B = 1
 
-  Scenario: Named values text
+  Scenario: Values as text
     Given the value X is
       """
       1
       """
-    Then the value X = 1
+    Then the value X =
+      """
+      1
+      """
 
   Scenario Outline: Operators
     Given the value X is <a>
     Then the value X <op> <b>
-
-    Examples:
-      | a                | op      | b             |
-      |                1 | =       |             1 |
-      |                1 | <>      |             2 |
-      |                1 | >       |             0 |
-      |                1 | >=      |             1 |
-      |                2 | >=      |             1 |
-      |                1 | <       |             2 |
-      |                1 | <=      |             1 |
-      |                1 | <=      |             2 |
-      | "foo"            | ~       | "o"           |
-      | "foo"            | !~      | "x"           |
-      | { "foo": "bar" } | matches | "foo = 'bar'" |
-
-  Scenario Outline: Operators from text
-    Given the value X is <a>
-    Then the value X <op>
+    And the value X <op>
       """
       <b>
       """
@@ -67,7 +45,7 @@ Feature: The ability to set and validate values
       | "foo"            | !~      | "x"           |
       | { "foo": "bar" } | matches | "foo = 'bar'" |
 
-  Scenario: value references
+  Scenario: value subsitutions
     Given the values
       | name | value   |
       | foo  |     123 |

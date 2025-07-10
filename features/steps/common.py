@@ -6,6 +6,8 @@ from enum import StrEnum
 from typing import Any
 from jsonata import Jsonata
 
+ERROR_CONTEXT_NOT_INITIALISED = "context has not been initialised properly.  Check environment.py"
+
 class Comparison(StrEnum):
     Is = "is"
     Equals = "="
@@ -68,36 +70,36 @@ register_type(Comparison=parse_comparison)
 # Values
 ################################################################################
 
-DEFAULT_VALUE_NAME = "default"
-
 def assert_valid(context, expr: str):
-    references = re.findall(r"\${[a-zA-Z][a-zA-Z0-9_]*}", expr)
+    references = re.findall(r"\${[A-z][A-z0-9_]*}", expr)
     for r in references:
         if not value_exists(context, r[2:-1]):
             raise ValueError(f"Unknown value '${r}'")
 
-def set_value_expr(context, value: str, name: str = DEFAULT_VALUE_NAME):
+def set_value(context, value: str, name: str):
+    assert hasattr(context, "values") and isinstance(context.values, dict), ERROR_CONTEXT_NOT_INITIALISED
     assert isinstance(value, str), "Values must be string representations"
     assert re.match(r"^[A-z][A-z0-9_]*$", name), f"Invalid name: {name}"
     assert_valid(context, value)
-    if not hasattr(context, "values"):
-        context.values = { }
     context.values[name] = value
 
-def get_value(context, name: str = DEFAULT_VALUE_NAME, default: Any = None):
-    if not hasattr(context, "values") or name not in context.values:
+def get_value(context, name: str, default: Any = None):
+    assert hasattr(context, "values") and isinstance(context.values, dict), ERROR_CONTEXT_NOT_INITIALISED
+    if name not in context.values:
         return default
     value = context.values[name]
     return evaluate(context, value)
 
 def value_exists(context, name: str) -> bool:
-    return hasattr(context, "values") and name in context.values
+    assert hasattr(context, "values") and isinstance(context.values, dict), ERROR_CONTEXT_NOT_INITIALISED
+    return name in context.values
 
 def evaluate(context, expr: str) -> Any:
     """
     This is a really super simple expression evaluation function, which will be
     replaced.
     """
+    assert hasattr(context, "functions") and isinstance(context.functions, dict), ERROR_CONTEXT_NOT_INITIALISED
     def repl(match):
         name = match.group(0)[2:-1]
         if name.endswith("()"):
@@ -114,11 +116,12 @@ def evaluate(context, expr: str) -> Any:
 DEFAULT_RESULT_NAME = "default"
 
 def set_result(context, value: Any, name: str):
-    if not hasattr(context, "results"):
-        context.results = { }
+    assert hasattr(context, "results") and isinstance(context.results, dict), ERROR_CONTEXT_NOT_INITIALISED
+    assert re.match(r"^[A-z][A-z0-9_]*$", name), f"Invalid name: {name}"
     context.results[name] = value
 
 def get_result(context, name: str, default: Any = None):
+    assert hasattr(context, "results") and isinstance(context.results, dict), ERROR_CONTEXT_NOT_INITIALISED
     if not hasattr(context, "results") or name not in context.results:
         return default
     return context.results[name]
