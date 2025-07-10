@@ -66,6 +66,14 @@ def compare(actual: Any, op: Comparison, expected: Any):
 
 register_type(Comparison=parse_comparison)
 
+def read_context(context, collection:str, name:str, default_value:Any = None):
+    return default_value if not hasattr(context, collection) else getattr(context, collection).get(name, default_value)
+
+def write_context(context, collection, name, value):
+    if not hasattr(context, collection):
+        setattr(context, collection, {})
+    getattr(context, collection)[name] = value
+
 ################################################################################
 # Values
 ################################################################################

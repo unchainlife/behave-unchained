@@ -1,8 +1,12 @@
 {
-    "editor.formatOnSave": false,
+    "editor.formatOnSave": true,
     "python.testing.pytestArgs": [
         "."
     ],
     "python.testing.unittestEnabled": false,
-    "python.testing.pytestEnabled": true
+    "python.testing.pytestEnabled": true,
+    "cucumberautocomplete.steps": [
+        "features/**/step_*.py"
+    ],
+    "cucumberautocomplete.strictGherkinCompletion": true
 }

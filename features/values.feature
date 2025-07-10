@@ -3,7 +3,7 @@ Feature: The ability to set and validate values
 
   Scenario: Basic values
     Given the value X is 123
-     Then the value X is 123
+    Then the value X is 123
 
   Scenario: Values in table form
     Given the values
@@ -52,6 +52,7 @@ Feature: The ability to set and validate values
       | bar  | ${foo}4 |
     Then the value foo < ${bar}
 
+  @http_server
   Scenario: functions
     Given the values
       | name           | value       |

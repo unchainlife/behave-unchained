@@ -1,5 +1,9 @@
 Feature: The ability to set and validate results
 
+  Scenario: basic
+    Given the result X is 1
+    Then the result X is 1
+
   Scenario Outline: Named results
     Given the result <name> is <value>
     Then the result <name> = <value>
@@ -7,7 +11,7 @@ Feature: The ability to set and validate results
     Examples:
       | name   | value       |
       | bool   | true        |
-      | number |     123.456 |
+      | number | 123.456     |
       | str    | "foo"       |
       | obj    | { }         |
       | list   | [ 1, 2, 3 ] |
@@ -20,7 +24,7 @@ Feature: The ability to set and validate results
     Examples:
       | value       |
       | true        |
-      |     123.456 |
+      | 123.456     |
       | "foo"       |
       | { }         |
       | [ 1, 2, 3 ] |
@@ -29,10 +33,10 @@ Feature: The ability to set and validate results
   Scenario: Results table
     Given the results
       | name | value |
-      | A    |   "a" |
-      | B    |     1 |
+      | A    | "a"   |
+      | B    | 1     |
     Then the result A = "a"
-     And the result B = 1
+    And the result B = 1
 
   Scenario: Named results text
     Given the result X is
@@ -54,14 +58,14 @@ Feature: The ability to set and validate results
 
     Examples:
       | a                | op      | b             |
-      |                1 | =       |             1 |
-      |                1 | <>      |             2 |
-      |                1 | >       |             0 |
-      |                1 | >=      |             1 |
-      |                2 | >=      |             1 |
-      |                1 | <       |             2 |
-      |                1 | <=      |             1 |
-      |                1 | <=      |             2 |
+      | 1                | =       | 1             |
+      | 1                | <>      | 2             |
+      | 1                | >       | 0             |
+      | 1                | >=      | 1             |
+      | 2                | >=      | 1             |
+      | 1                | <       | 2             |
+      | 1                | <=      | 1             |
+      | 1                | <=      | 2             |
       | "foo"            | ~       | "o"           |
       | "foo"            | !~      | "x"           |
       | { "foo": "bar" } | matches | "foo = 'bar'" |
@@ -75,14 +79,14 @@ Feature: The ability to set and validate results
 
     Examples:
       | a                | op      | b             |
-      |                1 | =       |             1 |
-      |                1 | <>      |             2 |
-      |                1 | >       |             0 |
-      |                1 | >=      |             1 |
-      |                2 | >=      |             1 |
-      |                1 | <       |             2 |
-      |                1 | <=      |             1 |
-      |                1 | <=      |             2 |
+      | 1                | =       | 1             |
+      | 1                | <>      | 2             |
+      | 1                | >       | 0             |
+      | 1                | >=      | 1             |
+      | 2                | >=      | 1             |
+      | 1                | <       | 2             |
+      | 1                | <=      | 1             |
+      | 1                | <=      | 2             |
       | "foo"            | ~       | "o"           |
       | "foo"            | !~      | "x"           |
       | { "foo": "bar" } | matches | "foo = 'bar'" |
