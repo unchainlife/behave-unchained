@@ -1,8 +1,11 @@
 import pytest
-from features.steps.common import get_value, set_value, assert_valid, evaluate
+from features.utils.common import get_value, set_value, evaluate
 
 class MockContext:
-    pass
+    def __init__(self):
+        self.values = {}
+        self.responses = {}
+        self.functions = {}
 
 def test__set_get_value():
     context = MockContext()

@@ -42,6 +42,8 @@ def http_server(context, host, port):
     @app.api_route("/{path_name:path}", methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"])
     async def http_response(path_name: str, request: Request, response: Response):
         body = await request.body()
+        correlation_id = request.headers.get("x-correlation-id", "")
+        request_id = request.headers.get("x-request-id", "")
         content = {
             "message": "Echo",
             "request": {
@@ -52,10 +54,11 @@ def http_server(context, host, port):
                 "body": body.decode("utf-8"),
             }
         }
+        headers = { k: v for (k, v) in request.headers.items() if k.startswith("x-")}
         return JSONResponse(
             content=content,
             status_code=200,
-            headers={}
+            headers=headers,
         )
 
     def run_server(stop_event:threading.Event):

@@ -8,7 +8,7 @@ the then steps to evaluate them.
 
 from behave import given, when, then
 import json
-from features.steps.common import Comparison, compare, get_result, set_result, DEFAULT_RESULT_NAME, evaluate
+from features.utils.common import Comparison, compare, get_result, set_result, DEFAULT_RESULT_NAME, evaluate
 
 ################################################################################
 # Given

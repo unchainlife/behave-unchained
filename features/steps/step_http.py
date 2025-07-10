@@ -2,7 +2,7 @@ from behave import given, when, then
 import requests
 from requests.structures import CaseInsensitiveDict
 
-from features.steps.common import write_context, read_context
+from features.utils.common import evaluate, write_context, read_context
 
 ################################################################################
 # Given
@@ -15,7 +15,7 @@ HTTP_RESPONSES = "http_responses"
 def given_the_http_headers(context):
     headers = {}
     for row in context.table:
-        headers[row["header"]] = row["value"]
+        headers[row["header"]] = evaluate(context, '"' + row["value"] + '"')
     write_context(context, HTTP, "headers", headers)
 
 @given("the protocol is {protocol:S}")
@@ -63,7 +63,7 @@ def when_i_invoke_name(context, name, method, path):
     for row in context.table:
         type = row["type"]
         param = row["name"]
-        value = row["value"]
+        value = evaluate(context, '"' + row["value"] + '"')
         match type:
             case "header":
                 headers[param] = str(value)
@@ -122,10 +122,11 @@ def the_response_name_headers_include(context, name):
         expected[row["header"]] = row["value"]
     mismatched = []
     for k, v in expected.items():
+        v = evaluate(context, '"' + v + '"')
         if k not in response.headers:
             mismatched.append(f"{k} is missing")
-        elif response.headers[k] != expected[k]:
-            mismatched.append(f"{k} expected '{expected[k]}' vs actual '{response.headers[k]}'")
+        elif response.headers[k] != v:
+            mismatched.append(f"{k} expected '{v}' vs actual '{response.headers[k]}'")
     assert mismatched == [], f"{len(mismatched)} errors: {", ".join(mismatched)}"
 
 # ------------------------------------------------------------------------------

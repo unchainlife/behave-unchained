@@ -71,7 +71,7 @@ Then:
 """
 
 from behave import given, then
-from features.steps.common import Comparison, compare, get_value, set_value, evaluate, DEFAULT_RESULT_NAME
+from features.utils.common import Comparison, compare, get_value, set_value, evaluate, DEFAULT_RESULT_NAME
 
 ################################################################################
 # Given
@@ -81,11 +81,6 @@ from features.steps.common import Comparison, compare, get_value, set_value, eva
 def step__given_value_name_is_value(context, name: str, value: str):
     """Set the value by manually"""
     set_value(context, name=name, value=value)
-
-@given("the value is {value}")
-def step__given_value_is_value(context, value: str):
-    """Set the value manually"""
-    step__given_value_name_is_value(context, name=DEFAULT_RESULT_NAME, value=value)
 
 @given("the value {name:S} is")
 def step__given_value_name_is_text(context, name: str):

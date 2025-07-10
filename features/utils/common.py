@@ -82,21 +82,21 @@ def assert_valid(context, expr: str):
     references = re.findall(r"\${[A-z][A-z0-9_]*}", expr)
     for r in references:
         if not value_exists(context, r[2:-1]):
-            raise ValueError(f"Unknown value '${r}'")
+            raise ValueError(f"Unknown value '{r}'")
 
 def set_value(context, value: str, name: str):
     assert hasattr(context, "values") and isinstance(context.values, dict), ERROR_CONTEXT_NOT_INITIALISED
     assert isinstance(value, str), "Values must be string representations"
     assert re.match(r"^[A-z][A-z0-9_]*$", name), f"Invalid name: {name}"
     assert_valid(context, value)
-    context.values[name] = value
+    context.values[name] = evaluate(context, value)
 
 def get_value(context, name: str, default: Any = None):
     assert hasattr(context, "values") and isinstance(context.values, dict), ERROR_CONTEXT_NOT_INITIALISED
     if name not in context.values:
         return default
     value = context.values[name]
-    return evaluate(context, value)
+    return value
 
 def value_exists(context, name: str) -> bool:
     assert hasattr(context, "values") and isinstance(context.values, dict), ERROR_CONTEXT_NOT_INITIALISED
