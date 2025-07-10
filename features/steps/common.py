@@ -25,24 +25,37 @@ def parse_comparison(s: str) -> Comparison:
 def compare(actual: Any, op: Comparison, expected: Any):
     match (op):
         case Comparison.Is:
+            assert type(actual) is type(expected), f"types don't match {type(actual)} vs {type(expected)}"
             assert actual is expected, f"{actual} is {expected}"
         case Comparison.Equals:
+            assert type(actual) is type(expected), f"types don't match {type(actual)} vs {type(expected)}"
             assert actual == expected, f"{actual} = {expected}"
         case Comparison.NotEquals:
+            assert type(actual) is type(expected), f"types don't match {type(actual)} vs {type(expected)}"
             assert actual != expected, f"{actual} <> {expected}"
         case Comparison.GreaterThan:
+            assert type(actual) is type(expected), f"types don't match {type(actual)} vs {type(expected)}"
             assert actual > expected, f"{actual} > {expected}"
         case Comparison.GreaterThenOrEquals:
+            assert type(actual) is type(expected), f"types don't match {type(actual)} vs {type(expected)}"
             assert actual >= expected, f"{actual} >= {expected}"
         case Comparison.LessThan:
+            assert type(actual) is type(expected), f"types don't match {type(actual)} vs {type(expected)}"
             assert actual < expected, f"{actual} < {expected}"
         case Comparison.LessThanOrEquals:
+            assert type(actual) is type(expected), f"types don't match {type(actual)} vs {type(expected)}"
             assert actual <= expected, f"{actual} <= {expected}"
         case Comparison.Contains:
+            assert type(actual) is str, f"string expected"
+            assert type(expected) is str, f"string expected"
             assert expected in actual, f"{actual} ~ {expected}"
         case Comparison.NotContains:
+            assert type(actual) is str, f"string expected"
+            assert type(expected) is str, f"string expected"
             assert expected not in actual, f"{actual} !~ {expected}"
         case Comparison.Matches:
+            assert type(actual) is dict, f"object expected"
+            assert type(expected) is str, f"string expected"
             expr = Jsonata(expected)
             result = expr.evaluate(actual)
             assert result is True, f"{actual} vs {expected}"
@@ -81,6 +94,10 @@ def value_exists(context, name: str) -> bool:
     return hasattr(context, "values") and name in context.values
 
 def evaluate(context, expr: str) -> Any:
+    """
+    This is a really super simple expression evaluation function, which will be
+    replaced.
+    """
     def repl(match):
         name = match.group(0)[2:-1]
         if name.endswith("()"):

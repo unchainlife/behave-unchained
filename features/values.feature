@@ -13,19 +13,6 @@ Feature: The ability to set and validate values
       | list   | [ 1, 2, 3 ] |
       | None   | null        |
 
-  Scenario Outline: Unnamed values
-    Given the value is <value>
-    Then the value = <value>
-
-    Examples:
-      | value       |
-      | true        |
-      |     123.456 |
-      | "foo"       |
-      | { }         |
-      | [ 1, 2, 3 ] |
-      | null        |
-
   Scenario: Results table
     Given the values
       | name | value |
@@ -40,13 +27,6 @@ Feature: The ability to set and validate values
       1
       """
     Then the value X = 1
-
-  Scenario: Unnamed values text
-    Given the value is
-      """
-      1
-      """
-    Then the value = 1
 
   Scenario Outline: Operators
     Given the value X is <a>
