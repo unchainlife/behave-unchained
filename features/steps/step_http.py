@@ -1,9 +1,12 @@
-from behave import given, when, then
+from behave import given, when, then, register_type
 import requests
 from requests.structures import CaseInsensitiveDict
 import json
 from jsonata import Jsonata
+import xmltodict
+from enum import StrEnum
 
+from features.steps.step_results import RESULTS
 from features.utils.common import evaluate, write_context, read_context
 
 ################################################################################
@@ -13,6 +16,7 @@ from features.utils.common import evaluate, write_context, read_context
 HTTP = "http"
 HTTP_RESPONSES = "http_responses"
 
+
 @given("the HTTP headers")
 def given_the_http_headers(context):
     headers = {}
@@ -20,35 +24,58 @@ def given_the_http_headers(context):
         headers[row["header"]] = evaluate(context, '"' + row["value"] + '"')
     write_context(context, HTTP, "headers", headers)
 
+
 @given("the protocol is {protocol:S}")
-def given_the_protocol_is(context, protocol:str):
+def given_the_protocol_is(context, protocol: str):
     write_context(context, HTTP, "protocol", protocol)
 
+
 @given("the hostname is {hostname:S}")
-def given_the_hostname_is(context, hostname:str):
+def given_the_hostname_is(context, hostname: str):
     write_context(context, HTTP, "hostname", hostname)
 
+
 @given("the port is {port:S}")
-def given_the_port_is(context, port:str):
+def given_the_port_is(context, port: str):
     write_context(context, HTTP, "protocol", port)
 
+
 @given("the base path is {base_path:S}")
-def given_the_base_path_is(context, base_path:str):
+def given_the_base_path_is(context, base_path: str):
     write_context(context, HTTP, "base_path", base_path)
 
+
 @given("the base url is {base_url:S}")
-def given_the_base_url_is(context, base_url:str):
+def given_the_base_url_is(context, base_url: str):
     write_context(context, HTTP, "base_url", base_url)
 
 
 @given("the querystring parameters")
 def given_the_querystring_parameters(context):
-    qs = { }
+    qs = {}
     for row in context.table.rows:
         name = row["parameter"]
         value = row["value"]
-        qs[name] = [value] if name not in qs else [ *qs[name], value ]
+        qs[name] = [value] if name not in qs else [*qs[name], value]
     write_context(context, HTTP, "querystring", qs)
+
+
+class MtlsClientPart(StrEnum):
+    CERTIFICATE = "certificate"
+    KEY = "key"
+
+    @classmethod
+    def parse(s: str):
+        return StrEnum(s)
+
+
+register_type(MtlsClient=MtlsClientPart)
+
+
+@given("the mTLS client {part:MtlsClient} from {filename}")
+def given_the_mtls_client_part_file(context, part, filename):
+    write_context(context, HTTP, f"mtls_{part}", filename)
+
 
 ################################################################################
 # When
@@ -57,11 +84,12 @@ def given_the_querystring_parameters(context):
 
 DEFAULT_RESPONSE_NAME = "default"
 
+
 @when("I invoke {name:S} as {method:S} {path:S}")
 def when_i_invoke_name(context, name, method, path):
     base_url = read_context(context, HTTP, "base_url")
-    headers = { **read_context(context, HTTP, "headers", {}) }
-    qs = { **read_context(context, HTTP, "querystring", {}) }
+    headers = {**read_context(context, HTTP, "headers", {})}
+    qs = {**read_context(context, HTTP, "querystring", {})}
     for row in context.table:
         type = row["type"]
         param = row["name"]
@@ -70,7 +98,7 @@ def when_i_invoke_name(context, name, method, path):
             case "header":
                 headers[param] = str(value)
             case "parameter":
-                qs[param] = [value] if param not in qs else [ *qs[param], value ]
+                qs[param] = [value] if param not in qs else [*qs[param], value]
             case _:
                 raise ValueError(f"Unhandled type: {type}")
     data = None
@@ -78,7 +106,10 @@ def when_i_invoke_name(context, name, method, path):
         data = context.text.strip()
         headers["Content-Length"] = str(len(data))
     url = base_url + path
-    cert = None
+    cert = (
+        read_context(context, HTTP, "mtls_certificate"),
+        read_context(context, HTTP, "mtls_key"),
+    )
     response = requests.request(
         method=method,
         url=url,
@@ -87,34 +118,50 @@ def when_i_invoke_name(context, name, method, path):
         params=qs,
         cert=cert,
     )
+    body = response.text
+    match response.headers["content-type"]:
+        case "application/json" | "application/fhir+json":
+            body = json.loads(body)
+        case "application/xml" | "application/fhir+xml":
+            body = xmltodict.parse(body)
+    write_context(context, RESULTS, name, body)
     write_context(context, HTTP_RESPONSES, name, response)
+
 
 # ------------------------------------------------------------------------------
 # Overloads
 # ------------------------------------------------------------------------------
 
+
 @when("I invoke {method:S} {path:S}")
 def when_i_invoke(context, method, path):
     when_i_invoke_name(context, DEFAULT_RESPONSE_NAME, method, path)
 
+
 ################################################################################
 # Then
 ################################################################################
+
 
 @then("the response {name:S} is OK")
 def then_the_response_name_is_ok(context, name):
     response: requests.Response = read_context(context, HTTP_RESPONSES, name)
     assert response.ok, f"got status_code {response.status_code}"
 
+
 @then("the response {name:S} is not OK")
 def then_the_response_name_is_not_ok(context, name):
     response: requests.Response = read_context(context, HTTP_RESPONSES, name)
     assert not response.ok, f"got status_code {response.status_code}"
 
+
 @then("the response {name:S} status code is {status_code:d}")
 def then_the_response_name_status_code_is(context, name, status_code):
     response: requests.Response = read_context(context, HTTP_RESPONSES, name)
-    assert response.status_code == int(status_code), f"expected {status_code} got {response.status_code}"
+    assert response.status_code == int(
+        status_code
+    ), f"expected {status_code} got {response.status_code}"
+
 
 @then("the response {name:S} headers include")
 def the_response_name_headers_include(context, name):
@@ -131,6 +178,7 @@ def the_response_name_headers_include(context, name):
             mismatched.append(f"{k} expected '{v}' vs actual '{response.headers[k]}'")
     assert mismatched == [], f"{len(mismatched)} errors: {", ".join(mismatched)}"
 
+
 @then("the response {name:S} body matches {query}")
 def then_the_response_name_body_matches_query(context, name, query):
     response: requests.Response = read_context(context, HTTP_RESPONSES, name)
@@ -139,34 +187,44 @@ def then_the_response_name_body_matches_query(context, name, query):
     result = expr.evaluate(actual)
     assert result is True, f"{actual} vs {query}"
 
+
 # ------------------------------------------------------------------------------
 # Overloads
 # ------------------------------------------------------------------------------
+
 
 @then("the response is OK")
 def then_the_response_is_ok(context):
     then_the_response_name_is_ok(context, DEFAULT_RESPONSE_NAME)
 
+
 @then("the response is not OK")
 def then_the_response_is_not_ok(context):
     then_the_response_name_is_not_ok(context, DEFAULT_RESPONSE_NAME)
+
 
 @then("the response status code is {status_code}")
 def then_the_response_status_code_is(context, status_code):
     then_the_response_name_status_code_is(context, DEFAULT_RESPONSE_NAME, status_code)
 
+
 @then("the response headers include")
 def the_response_headers_include(context):
     the_response_name_headers_include(context, DEFAULT_RESPONSE_NAME)
+
 
 @then("the response {name:S} body matches")
 def then_the_response_name_body_matches(context, name):
     then_the_response_name_body_matches_query(context, name, context.text)
 
+
 @then("the response body matches {query}")
 def then_the_response_name_body_matches(context, query):
     then_the_response_name_body_matches_query(context, DEFAULT_RESPONSE_NAME, query)
 
+
 @then("the response body matches")
 def then_the_response_name_body_matches(context):
-    then_the_response_name_body_matches_query(context, DEFAULT_RESPONSE_NAME, context.text)
+    then_the_response_name_body_matches_query(
+        context, DEFAULT_RESPONSE_NAME, context.text
+    )

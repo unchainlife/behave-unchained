@@ -8,5 +8,6 @@
     "cucumberautocomplete.steps": [
         "features/**/step_*.py"
     ],
-    "cucumberautocomplete.strictGherkinCompletion": true
+    "cucumberautocomplete.strictGherkinCompletion": true,
+    "cucumberautocomplete.skipDocStringsFormat": true,
 }

@@ -8,34 +8,51 @@ the then steps to evaluate them.
 
 from behave import given, when, then
 import json
-from features.utils.common import Comparison, compare, get_result, set_result, DEFAULT_RESULT_NAME, evaluate
+from features.utils.common import (
+    Comparison,
+    compare,
+    get_result,
+    set_result,
+    DEFAULT_RESULT_NAME,
+    evaluate,
+)
+
+RESULTS = "results"
 
 ################################################################################
 # Given
 ################################################################################
+
 
 @given("the result {name:S} is {value}")
 def step__given_result_name_is_value(context, name: str, value: str):
     """Set the result by manually"""
     set_result(context, name=name, value=evaluate(context, value))
 
+
 @given("the result is {value}")
 def step__given_result_is_value(context, value: str):
     """Set the result manually"""
     step__given_result_name_is_value(context, name=DEFAULT_RESULT_NAME, value=value)
 
+
 @given("the result {name:S} is")
 def step__given_result_name_is_text(context, name: str):
     step__given_result_name_is_value(context, name, context.text)
 
+
 @given("the result is")
 def step__given_result_is_text(context):
-    step__given_result_name_is_value(context, name=DEFAULT_RESULT_NAME, value=context.text)
+    step__given_result_name_is_value(
+        context, name=DEFAULT_RESULT_NAME, value=context.text
+    )
+
 
 @given("the results")
 def step__given_the_results(context):
     for row in context.table:
         set_result(context, name=row["name"], value=json.loads(row["value"]))
+
 
 ################################################################################
 # When
@@ -51,20 +68,32 @@ def step__given_the_results(context):
 # comparisons
 # ------------------------------------------------------------------------------
 
+
 @then("the result {name:S} {op:Comparison}")
 def step__then_the_result(context, name: str, op: Comparison):
-    step__then_the_result_name_is_value(context, name=name, op=op, expected=context.text)
+    step__then_the_result_name_is_value(
+        context, name=name, op=op, expected=context.text
+    )
+
 
 @then("the result {op:Comparison}")
 def step__then_the_result(context, op: Comparison):
-    step__then_the_result_name_is_value(context, name=DEFAULT_RESULT_NAME, op=op, expected=context.text)
+    step__then_the_result_name_is_value(
+        context, name=DEFAULT_RESULT_NAME, op=op, expected=context.text
+    )
+
 
 @then("the result {op:Comparison} {expected}")
 def step__then_the_result_is_value(context, op: Comparison, expected: str):
-    step__then_the_result_name_is_value(context, name=DEFAULT_RESULT_NAME, op=op, expected=expected)
+    step__then_the_result_name_is_value(
+        context, name=DEFAULT_RESULT_NAME, op=op, expected=expected
+    )
+
 
 @then("the result {name:S} {op:Comparison} {expected}")
-def step__then_the_result_name_is_value(context, name: str, op:Comparison, expected: str):
+def step__then_the_result_name_is_value(
+    context, name: str, op: Comparison, expected: str
+):
     actual = get_result(context, name=name)
     expected = evaluate(context, expected)
     compare(
