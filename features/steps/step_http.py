@@ -25,29 +25,20 @@ def given_the_http_headers(context):
     write_context(context, HTTP, "headers", headers)
 
 
-@given("the protocol is {protocol:S}")
-def given_the_protocol_is(context, protocol: str):
-    write_context(context, HTTP, "protocol", protocol)
+class HttpPart(StrEnum):
+    PROTOCOL = "protocol"
+    HOSTNAME = "hostname"
+    PORT = "port"
+    BASE_PATH = "basepath"
+    BASE_URL = "baseurl"
 
 
-@given("the hostname is {hostname:S}")
-def given_the_hostname_is(context, hostname: str):
-    write_context(context, HTTP, "hostname", hostname)
+register_type(HttpPart=lambda s: HttpPart(s))
 
 
-@given("the port is {port:S}")
-def given_the_port_is(context, port: str):
-    write_context(context, HTTP, "protocol", port)
-
-
-@given("the base path is {base_path:S}")
-def given_the_base_path_is(context, base_path: str):
-    write_context(context, HTTP, "base_path", base_path)
-
-
-@given("the base url is {base_url:S}")
-def given_the_base_url_is(context, base_url: str):
-    write_context(context, HTTP, "base_url", base_url)
+@given("the http {part:HttpPart} is {value:S}")
+def given_the_http_part(context, part: HttpPart, value: str):
+    write_context(context, HTTP, part, value)
 
 
 @given("the querystring parameters")
@@ -64,16 +55,16 @@ class MtlsClientPart(StrEnum):
     CERTIFICATE = "certificate"
     KEY = "key"
 
-    @classmethod
-    def parse(s: str):
-        return StrEnum(s)
 
-
-register_type(MtlsClient=MtlsClientPart)
+register_type(MtlsClient=lambda s: MtlsClientPart(s))
 
 
 @given("the mTLS client {part:MtlsClient} from {filename}")
 def given_the_mtls_client_part_file(context, part, filename):
+    """
+    Configure the HTTP request to submit mTLS certificate and key for
+    authentication.
+    """
     write_context(context, HTTP, f"mtls_{part}", filename)
 
 
@@ -87,7 +78,22 @@ DEFAULT_RESPONSE_NAME = "default"
 
 @when("I invoke {name:S} as {method:S} {path:S}")
 def when_i_invoke_name(context, name, method, path):
-    base_url = read_context(context, HTTP, "base_url")
+    """Invoke the HTTP request, storing the named response and the response body
+    as a named result.
+
+    Args:
+        context:        The behave context.
+        name (str):     The name under which the response and result
+                        (response.text) are to be stored.
+        method (str):   The HTTP method to be used when invoking the request.
+        path (str):     The path to be used when invoking the request.  This
+                        will be appended to the the "base url".
+
+    Raises:
+        ValueError
+
+    """
+    base_url = read_context(context, HTTP, HttpPart.BASE_URL)
     headers = {**read_context(context, HTTP, "headers", {})}
     qs = {**read_context(context, HTTP, "querystring", {})}
     for row in context.table:
@@ -135,6 +141,15 @@ def when_i_invoke_name(context, name, method, path):
 
 @when("I invoke {method:S} {path:S}")
 def when_i_invoke(context, method, path):
+    """
+    Invoke the HTTP request, storing the response and and putting the
+    response body as a result
+
+    Args:
+        context: The behave context
+        method (str): The HTTP method
+        path (str): The HTTP path, to be appended to the "base url"
+    """
     when_i_invoke_name(context, DEFAULT_RESPONSE_NAME, method, path)
 
 
@@ -145,18 +160,40 @@ def when_i_invoke(context, method, path):
 
 @then("the response {name:S} is OK")
 def then_the_response_name_is_ok(context, name):
+    """
+    Check that the named response has a 2xx status code
+
+    Args:
+        context: The behave context
+        name (str): The named response to be evaluated
+    """
     response: requests.Response = read_context(context, HTTP_RESPONSES, name)
     assert response.ok, f"got status_code {response.status_code}"
 
 
 @then("the response {name:S} is not OK")
 def then_the_response_name_is_not_ok(context, name):
+    """
+    Check that the named response has a non-2xx status code
+
+    Args:
+        context: The behave context
+        name (str): The named response to be evaluated
+    """
     response: requests.Response = read_context(context, HTTP_RESPONSES, name)
     assert not response.ok, f"got status_code {response.status_code}"
 
 
 @then("the response {name:S} status code is {status_code:d}")
 def then_the_response_name_status_code_is(context, name, status_code):
+    """
+    Check that the named response has a specific status code
+
+    Args:
+        context: The behave context
+        name (str): The named response to be evaluated
+        status_code (int): The expected HTTP status code
+    """
     response: requests.Response = read_context(context, HTTP_RESPONSES, name)
     assert response.status_code == int(
         status_code
@@ -165,6 +202,14 @@ def then_the_response_name_status_code_is(context, name, status_code):
 
 @then("the response {name:S} headers include")
 def the_response_name_headers_include(context, name):
+    """
+    Check that the named response has all of the stated headers included.
+    Note that this does not exclude the presence of other headers.
+
+    Args:
+        context: The behave context
+        name (str): The named response to be evaluated
+    """
     response: requests.Response = read_context(context, HTTP_RESPONSES, name)
     expected = CaseInsensitiveDict()
     for row in context.table:
@@ -179,15 +224,6 @@ def the_response_name_headers_include(context, name):
     assert mismatched == [], f"{len(mismatched)} errors: {", ".join(mismatched)}"
 
 
-@then("the response {name:S} body matches {query}")
-def then_the_response_name_body_matches_query(context, name, query):
-    response: requests.Response = read_context(context, HTTP_RESPONSES, name)
-    actual = json.loads(response.content.decode("utf-8"))
-    expr = Jsonata(query)
-    result = expr.evaluate(actual)
-    assert result is True, f"{actual} vs {query}"
-
-
 # ------------------------------------------------------------------------------
 # Overloads
 # ------------------------------------------------------------------------------
@@ -195,36 +231,45 @@ def then_the_response_name_body_matches_query(context, name, query):
 
 @then("the response is OK")
 def then_the_response_is_ok(context):
+    """
+    Check for a 2xx status code
+
+    Args:
+        context: The behave context
+    """
     then_the_response_name_is_ok(context, DEFAULT_RESPONSE_NAME)
 
 
 @then("the response is not OK")
 def then_the_response_is_not_ok(context):
+    """
+    Check for a non 2xx status code
+
+    Args:
+        context: The behave context
+    """
     then_the_response_name_is_not_ok(context, DEFAULT_RESPONSE_NAME)
 
 
 @then("the response status code is {status_code}")
 def then_the_response_status_code_is(context, status_code):
+    """
+    Check for a specific status code
+
+    Args:
+        context: The behave context
+        status_code (int): The HTTP status code expected
+    """
     then_the_response_name_status_code_is(context, DEFAULT_RESPONSE_NAME, status_code)
 
 
 @then("the response headers include")
 def the_response_headers_include(context):
+    """
+    Check that every specified header is included in the response.  This does
+    not exclude the presence of headers not named
+
+    Args:
+        context: The behave context
+    """
     the_response_name_headers_include(context, DEFAULT_RESPONSE_NAME)
-
-
-@then("the response {name:S} body matches")
-def then_the_response_name_body_matches(context, name):
-    then_the_response_name_body_matches_query(context, name, context.text)
-
-
-@then("the response body matches {query}")
-def then_the_response_name_body_matches(context, query):
-    then_the_response_name_body_matches_query(context, DEFAULT_RESPONSE_NAME, query)
-
-
-@then("the response body matches")
-def then_the_response_name_body_matches(context):
-    then_the_response_name_body_matches_query(
-        context, DEFAULT_RESPONSE_NAME, context.text
-    )

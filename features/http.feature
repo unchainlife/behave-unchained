@@ -10,7 +10,7 @@ Feature: HTTP server
     And the mTLS client key from assets/dev.key
 
   Scenario: Basic test
-    Given the base url is http://127.0.0.1:8000/FHIR/R4
+    Given the http baseurl is http://127.0.0.1:8000/FHIR/R4
     And the HTTP headers
       | header           | value             |
       | x-correlation-id | ${CORRELATION_ID} |

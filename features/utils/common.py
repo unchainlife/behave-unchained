@@ -11,6 +11,10 @@ ERROR_CONTEXT_NOT_INITIALISED = (
 )
 
 
+def enum_regex(en) -> str:
+    return "(" + "|".join([str(e) for e in en]) + ")"
+
+
 class Comparison(StrEnum):
     Is = "is"
     Equals = "="
@@ -24,7 +28,7 @@ class Comparison(StrEnum):
     Matches = "matches"
 
 
-@parse.with_pattern("(" + "|".join([str(e) for e in Comparison]) + ")")
+@parse.with_pattern(enum_regex(Comparison))
 def parse_comparison(s: str) -> Comparison:
     return Comparison(s)
 
